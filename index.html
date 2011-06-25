@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1" />
+        <title>Групповой чатик</title>
+        <link rel="stylesheet"  href="http://code.jquery.com/mobile/1.0a4.1/jquery.mobile-1.0a4.1.min.css" />  
+        <style>
+        	body { background: #CCC;}
+        </style>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.5.2.min.js"></script> 
+		<script type="text/javascript"> 
+		    $(document).bind("mobileinit", function(){
+		        $.extend($.mobile, {
+		            loadingMessage: "Загрузка...",
+		            pageLoadErrorMessage: "Страница не найдена =("
+		        });
+		    $.mobile.page.prototype.options.backBtnText = "Назад";
+			$.mobile.selectmenu.prototype.options.nativeMenu = false;
+		    });
+		</script> 
+		<script type="text/javascript" src="http://code.jquery.com/mobile/1.0a4.1/jquery.mobile-1.0a4.1.min.js"></script>
+		<script src="http://cdn.socket.io/stable/socket.io.js"></script>
+		  <script>WEB_SOCKET_SWF_LOCATION = 'http://cdn.socket.io/stable/WebSocketMain.swf';</script>
+		  <script>
+			window.onload = function() {
+
+				var socket = new io.Socket(window.location.hostname, {port: 8001, rememberTransport: false});
+				socket.connect();
+
+				socket.on('message', function(data) {
+					$("<li><h3>" + data["user"] + "</h3><p><strong>" + data["body"] + "</strong></p><span class='ui-li-count'>" + data["time"] + "</span></li>").prependTo("#messages");
+					$('#messages').listview('refresh');
+					$('#messages').animate({
+                        scrollTop: $('#header').scrollHeight
+                    }, 1);
+                    $('#header').navbar('refresh');
+				});
+				
+				function send(data) {
+		                var message = $("#message").val();
+						var user = $("#user").val();
+						if(user != "" && message != "")
+						{
+							$("#message").val("");
+							socket.send({"user": user, "body": message});
+						}	
+		            }
+				
+				$("#message").keypress(function(e) {
+					if(e.keyCode == 13) send(e);
+				});
+	
+				//send the message when submit is clicked
+				$("#send").bind('click',
+		            send
+                );
+			};
+		</script>
+    </head>
+    <body>
+		<div data-role="page" data-theme="b" style="height: 100%">
+			<div id="header" data-role="header" data-position="fixed" data-backbtn="false">
+				<h1>Групповой чатик =)</h1>
+			</div>
+			<div data-role="content">
+				<ul data-role="listview" data-inset="true">
+					<li>
+						<div data-role="fieldcontain"> 
+							<label for="user">Введите Ваше имя:</label> 
+							<input type="text" name="user" id="user" value="Борис =)"  /> 
+						</div> 
+					</li>
+				</ul>
+				<ul data-role="listview" data-inset="true">
+					<li>
+						<div data-role="fieldcontain"> 
+							<label for="message">Введите сообщение:</label>
+							<input type="text" name="message" id="message" value="" /> 
+						</div>
+						<button id="send" type="submit" data-icon="check" data-theme="e">Отправить</button>
+					</li>
+				</ul>    
+				<ul data-role="listview" data-inset="true" id="messages">
+					{% for message in messages %}
+						<li>
+							<h3>{{message.user}}</h3> 
+							<p><strong>{{message.body}}</strong></p>
+							<span class="ui-li-count">{{message.time}}</span>
+						</li>
+					{% end %}
+				</ul>
+			</div>
+		</div>
+    </body>
+</html>
+
